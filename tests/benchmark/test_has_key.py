@@ -2,10 +2,9 @@ import pytest
 
 from aiida import orm
 from aiida.orm.querybuilder import QueryBuilder
-from utils import extract_component, gen_json
+from utils import extract_key, gen_json
 
-GROUP_NAME = 'json-contains'
-
+GROUP_NAME = 'json-has-key'
 
 COMPLEX_JSON_DEPTH_RANGE = [2**i for i in range(4)]
 COMPLEX_JSON_BREADTH_RANGE = [2**i for i in range(4)]
@@ -17,8 +16,8 @@ LARGE_TABLE_SIZE_RANGE = [2**i for i in range(1, 11)]
 @pytest.mark.parametrize('breadth', [1, 2, 4])
 @pytest.mark.usefixtures('aiida_profile_clean')
 def test_deep_json(benchmark, depth, breadth):
-    lhs = gen_json(depth, breadth)
-    rhs = extract_component(lhs, p=1.0 / depth)
+    lhs = gen_json(depth, breadth, force_dict=True)
+    rhs = extract_key(lhs)
     assert 0 == len(QueryBuilder().append(orm.Dict).all())
 
     orm.Dict(
@@ -30,7 +29,7 @@ def test_deep_json(benchmark, depth, breadth):
     qb = QueryBuilder().append(
         orm.Dict,
         filters={
-            'attributes.data': {'contains': rhs},
+            'attributes.data': {'has_key': rhs},
         },
         project=['attributes.id'],
     )
@@ -44,8 +43,8 @@ def test_deep_json(benchmark, depth, breadth):
 @pytest.mark.parametrize('breadth', [1, 10, 100])
 @pytest.mark.usefixtures('aiida_profile_clean')
 def test_wide_json(benchmark, depth, breadth):
-    lhs = gen_json(depth, breadth)
-    rhs = extract_component(lhs, p=1.0 / depth)
+    lhs = gen_json(depth, breadth, force_dict=True)
+    rhs = extract_key(lhs)
     assert 0 == len(QueryBuilder().append(orm.Dict).all())
 
     orm.Dict(
@@ -57,7 +56,7 @@ def test_wide_json(benchmark, depth, breadth):
     qb = QueryBuilder().append(
         orm.Dict,
         filters={
-            'attributes.data': {'contains': rhs},
+            'attributes.data': {'has_key': rhs},
         },
         project=['attributes.id'],
     )
@@ -70,8 +69,8 @@ def test_wide_json(benchmark, depth, breadth):
 @pytest.mark.parametrize('num_entries', LARGE_TABLE_SIZE_RANGE)
 @pytest.mark.usefixtures('aiida_profile_clean')
 def test_large_table(benchmark, num_entries):
-    data = gen_json(2, 10)
-    rhs = extract_component(data)
+    data = gen_json(2, 10, force_dict=True)
+    rhs = extract_key(data)
     assert 0 == len(QueryBuilder().append(orm.Dict).all())
 
     for i in range(num_entries):
@@ -84,7 +83,7 @@ def test_large_table(benchmark, num_entries):
     qb = QueryBuilder().append(
         orm.Dict,
         filters={
-            'attributes.data': {'contains': rhs},
+            'attributes.data': {'has_key': rhs},
         },
         project=['attributes.id'],
     )
