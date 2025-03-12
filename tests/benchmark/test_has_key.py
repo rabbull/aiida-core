@@ -12,8 +12,8 @@ LARGE_TABLE_SIZE_RANGE = [2**i for i in range(1, 11)]
 
 
 @pytest.mark.benchmark(group=GROUP_NAME)
-@pytest.mark.parametrize('depth', [1, 2, 4, 8])
-@pytest.mark.parametrize('breadth', [1, 2, 4])
+@pytest.mark.parametrize('depth', list(range(1, 16)))
+@pytest.mark.parametrize('breadth', [2])
 @pytest.mark.usefixtures('aiida_profile_clean')
 def test_deep_json(benchmark, depth, breadth):
     lhs = gen_json(depth, breadth, force_dict=True)
@@ -40,7 +40,7 @@ def test_deep_json(benchmark, depth, breadth):
 
 @pytest.mark.benchmark(group=GROUP_NAME)
 @pytest.mark.parametrize('depth', [2])
-@pytest.mark.parametrize('breadth', [1, 10, 100])
+@pytest.mark.parametrize('breadth', list(range(1, 101, 5)))
 @pytest.mark.usefixtures('aiida_profile_clean')
 def test_wide_json(benchmark, depth, breadth):
     lhs = gen_json(depth, breadth, force_dict=True)
