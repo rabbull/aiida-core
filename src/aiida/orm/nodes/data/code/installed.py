@@ -137,6 +137,13 @@ class InstalledCode(Code):
             with override_log_level():  # Temporarily suppress noisy logging
                 with self.computer.get_transport() as transport:
                     file_exists = transport.isfile(str(self.filepath_executable))
+                    if file_exists:
+                        mode = transport.get_mode(str(self.filepath_executable))
+                        # `format(mode, 'b')` with default permissions
+                        # gives 110110100, representing rw-rw-r--
+                        # Check on index 2 if user has execute
+                        user_has_execute = format(mode, 'b')[2] == '1'
+
         except Exception as exception:
             raise exceptions.ValidationError(
                 'Could not connect to the configured computer to determine whether the specified executable exists.'
@@ -147,6 +154,13 @@ class InstalledCode(Code):
                 f'The provided remote absolute path `{self.filepath_executable}` does not exist on the computer.'
             )
 
+        if not user_has_execute:
+            execute_msg = (
+                f'The file at the remote absolute path `{self.filepath_executable}` exists, '
+                'but might not actually be executable. Check the permissions.'
+            )
+            raise exceptions.ValidationError(execute_msg)
+
     def can_run_on_computer(self, computer: Computer) -> bool:
         """Return whether the code can run on a given computer.
 
@@ -156,7 +170,7 @@ class InstalledCode(Code):
         type_check(computer, Computer)
         return computer.pk == self.computer.pk
 
-    def get_executable(self) -> pathlib.PurePosixPath:
+    def get_executable(self) -> pathlib.PurePath:
         """Return the executable that the submission script should execute to run the code.
 
         :return: The executable to be called in the submission script.
@@ -193,12 +207,12 @@ class InstalledCode(Code):
         return f'{self.label}@{self.computer.label}'
 
     @property
-    def filepath_executable(self) -> pathlib.PurePosixPath:
+    def filepath_executable(self) -> pathlib.PurePath:
         """Return the absolute filepath of the executable that this code represents.
 
         :return: The absolute filepath of the executable.
         """
-        return pathlib.PurePosixPath(self.base.attributes.get(self._KEY_ATTRIBUTE_FILEPATH_EXECUTABLE))
+        return pathlib.PurePath(self.base.attributes.get(self._KEY_ATTRIBUTE_FILEPATH_EXECUTABLE))
 
     @filepath_executable.setter
     def filepath_executable(self, value: str) -> None:

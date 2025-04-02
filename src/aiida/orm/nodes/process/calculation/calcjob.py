@@ -453,7 +453,8 @@ class CalcJobNode(CalculationNode):
     def get_transport(self) -> 'Transport':
         """Return the transport for this calculation.
 
-        :return: `Transport` configured with the `AuthInfo` associated to the computer of this node
+        :return: Transport configured
+            with the `AuthInfo` associated to the computer of this node
         """
         return self.get_authinfo().get_transport()
 
@@ -520,7 +521,7 @@ class CalcJobNode(CalculationNode):
 
         try:
             stdout = retrieved_node.base.repository.get_object_content(filename)
-        except IOError:
+        except OSError:
             stdout = None
 
         return stdout
@@ -538,7 +539,7 @@ class CalcJobNode(CalculationNode):
 
         try:
             stderr = retrieved_node.base.repository.get_object_content(filename)
-        except IOError:
+        except OSError:
             stderr = None
 
         return stderr
